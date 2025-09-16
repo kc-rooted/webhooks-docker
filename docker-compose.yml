@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  webhook-handler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: webhook-handler:latest
+    container_name: webhook-handler
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - MONDAY_API_TOKEN=${MONDAY_API_TOKEN}
+      - MONDAY_WEBHOOK_SECRET=${MONDAY_WEBHOOK_SECRET}
+      - AIRBYTE_WEBHOOK_TOKEN=${AIRBYTE_WEBHOOK_TOKEN}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - CORS_ORIGINS=${CORS_ORIGINS:-*}
+    networks:
+      - webhook-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.webhook-handler.rule=Host(`webhooks.yourdomain.com`)"
+      - "traefik.http.services.webhook-handler.loadbalancer.server.port=3000"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  webhook-network:
+    driver: bridge

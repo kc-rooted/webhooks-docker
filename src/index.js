@@ -15,7 +15,7 @@ const { validateWebhook } = require('./middleware/validation');
 const { apiKeyAuth } = require('./middleware/apiKeyAuth');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 app.use(helmet());
 app.use(cors());

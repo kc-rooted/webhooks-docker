@@ -27,7 +27,7 @@ app.use('/webhooks/monday', apiKeyAuth, validateWebhook('monday'), mondayRouter)
 app.use('/webhooks/airbyte', apiKeyAuth, validateWebhook('airbyte'), airbyteRouter);
 app.use('/health', healthRouter);
 
-app.get('/', (req, res) => {
+app.get('/', apiKeyAuth, (req, res) => {
   res.json({
     status: 'running',
     service: 'webhook-handler',

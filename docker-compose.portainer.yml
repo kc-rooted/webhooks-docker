@@ -8,10 +8,10 @@ services:
     container_name: webhook-handler
     restart: unless-stopped
     ports:
-      - "3001:3000"
+      - "3001:3001"
     environment:
       - NODE_ENV=${NODE_ENV:-production}
-      - PORT=${PORT:-3000}
+      - PORT=${PORT:-3001}
       - MONDAY_API_TOKEN=${MONDAY_API_TOKEN}
       - MONDAY_WEBHOOK_SECRET=${MONDAY_WEBHOOK_SECRET:-}
       - AIRBYTE_WEBHOOK_TOKEN=${AIRBYTE_WEBHOOK_TOKEN}
@@ -27,14 +27,14 @@ services:
       - "traefik.http.routers.webhook-handler.rule=Host(`webhooks.yourdomain.com`)"
       - "traefik.http.routers.webhook-handler.entrypoints=websecure"
       - "traefik.http.routers.webhook-handler.tls.certresolver=letsencrypt"
-      - "traefik.http.services.webhook-handler.loadbalancer.server.port=3000"
+      - "traefik.http.services.webhook-handler.loadbalancer.server.port=3001"
 
       # Health check labels
       - "webhook.health.check=/health"
       - "webhook.service=monday-airbyte-handler"
 
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/health"]
       interval: 30s
       timeout: 10s
       retries: 3

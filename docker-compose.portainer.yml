@@ -12,6 +12,7 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV:-production}
       - PORT=${PORT:-3001}
+      - API_KEY=${API_KEY}
       - MONDAY_API_TOKEN=${MONDAY_API_TOKEN}
       - MONDAY_WEBHOOK_SECRET=${MONDAY_WEBHOOK_SECRET:-}
       - AIRBYTE_WEBHOOK_TOKEN=${AIRBYTE_WEBHOOK_TOKEN}

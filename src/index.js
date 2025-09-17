@@ -12,6 +12,7 @@ const airbyteRouter = require('./handlers/airbyte');
 const healthRouter = require('./handlers/health');
 const { errorHandler } = require('./middleware/errorHandler');
 const { validateWebhook } = require('./middleware/validation');
+const { apiKeyAuth } = require('./middleware/apiKeyAuth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -22,8 +23,8 @@ app.use(morgan('combined'));
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 
-app.use('/webhooks/monday', validateWebhook('monday'), mondayRouter);
-app.use('/webhooks/airbyte', validateWebhook('airbyte'), airbyteRouter);
+app.use('/webhooks/monday', apiKeyAuth, validateWebhook('monday'), mondayRouter);
+app.use('/webhooks/airbyte', apiKeyAuth, validateWebhook('airbyte'), airbyteRouter);
 app.use('/health', healthRouter);
 
 app.get('/', (req, res) => {

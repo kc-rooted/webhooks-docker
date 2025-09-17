@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   webhook-handler:
-    image: ghcr.io/kc-rooted/webhook-handler:latest
+    image: webhook-handler:latest
     build:
       context: https://github.com/kc-rooted/webhooks-docker.git#main
       dockerfile: Dockerfile

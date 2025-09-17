@@ -37,7 +37,8 @@
    - **Build method**: Select **Web editor**
 
 2. **Paste Docker Compose Content**
-   Copy the contents from `docker-compose.portainer.yml` (see below)
+   Copy the contents from `docker-compose.porta
+iner.yml` (see below)
 
 3. **Set Environment Variables**
    In the environment variables section, add:

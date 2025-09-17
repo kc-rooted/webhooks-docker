@@ -1,0 +1,21 @@
+# Portainer Environment Variables Template
+# Copy these variables into Portainer when creating the stack
+
+# Monday.com Configuration
+MONDAY_API_TOKEN=eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjU2MjgzNTMxNywiYWFpIjoxMSwidWlkIjo5NDU5NjEwLCJpYWQiOiIyMDI1LTA5LTE2VDE4OjU2OjEwLjU1OVoiLCJwZXIiOiJtZTp3cml0ZSIsImFjdGlkIjo0Mjk5OTkwLCJyZ24iOiJ1c2UxIn0.aSM7tOXmQUN7GLVVn19gRH2SLFSmYDUH5RGxlfmB4s8
+MONDAY_WEBHOOK_SECRET=
+
+# Airbyte Configuration
+AIRBYTE_WEBHOOK_TOKEN=your_secure_airbyte_token_here
+
+# Server Configuration
+NODE_ENV=production
+PORT=3000
+
+# Optional Configuration
+LOG_LEVEL=info
+CORS_ORIGINS=*
+
+# Rate Limiting (Optional)
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100

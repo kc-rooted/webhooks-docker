@@ -39,6 +39,23 @@ app.get('/', apiKeyAuth, (req, res) => {
   });
 });
 
+// Temporary: Catch Monday webhooks that are going to the wrong path
+app.post('/', apiKeyAuth, (req, res) => {
+  console.log('WARNING: Monday webhook received at root path instead of /webhooks/monday');
+  console.log('Request headers:', req.headers);
+  console.log('Request body:', JSON.stringify(req.body, null, 2));
+
+  // Check if this is a Monday webhook
+  if (req.body.event || req.body.challenge) {
+    console.log('This appears to be a Monday webhook - redirecting to proper handler...');
+    // Forward to the Monday handler
+    req.url = '/webhooks/monday/';
+    return app._router.handle(req, res);
+  }
+
+  res.status(404).json({ error: 'Not Found' });
+});
+
 app.use(errorHandler);
 
 app.listen(PORT, '0.0.0.0', () => {

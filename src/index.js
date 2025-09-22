@@ -6,6 +6,7 @@ const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const helmet = require('helmet');
 const cors = require('cors');
+const cron = require('node-cron');
 
 const mondayRouter = require('./handlers/monday');
 const airbyteRouter = require('./handlers/airbyte');
@@ -13,6 +14,7 @@ const healthRouter = require('./handlers/health');
 const { errorHandler } = require('./middleware/errorHandler');
 const { validateWebhook } = require('./middleware/validation');
 const { apiKeyAuth } = require('./middleware/apiKeyAuth');
+const WeekAssignedUpdater = require('./jobs/weekAssignedUpdater');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -57,6 +59,57 @@ app.post('/', apiKeyAuth, (req, res) => {
 });
 
 app.use(errorHandler);
+
+// Initialize scheduled jobs
+if (process.env.CRON_ENABLED === 'true') {
+  const weekAssignedUpdater = new WeekAssignedUpdater();
+  const cronSchedule = process.env.CRON_SCHEDULE || '0 3 * * *'; // Default 3am daily
+  const timezone = process.env.CRON_TIMEZONE || 'America/New_York';
+
+  // Validate cron expression
+  if (cron.validate(cronSchedule)) {
+    const scheduledJob = cron.schedule(cronSchedule, async () => {
+      console.log(`[CRON] Week Assigned update job triggered at ${new Date().toISOString()}`);
+      try {
+        await weekAssignedUpdater.updateAllBoards();
+      } catch (error) {
+        console.error('[CRON] Failed to run Week Assigned update:', error);
+      }
+    }, {
+      scheduled: true,
+      timezone: timezone
+    });
+
+    console.log(`Scheduled job initialized: Week Assigned updater`);
+    console.log(`  Schedule: ${cronSchedule} (${timezone})`);
+    console.log(`  Boards to process: ${process.env.MONDAY_BOARD_IDS || 'None configured'}`);
+  } else {
+    console.error(`Invalid cron expression: ${cronSchedule}`);
+  }
+
+  // Add manual trigger endpoint for testing
+  app.post('/jobs/update-week-assigned', apiKeyAuth, async (req, res) => {
+    try {
+      console.log('Manual trigger of Week Assigned update requested');
+      const results = await weekAssignedUpdater.runManually();
+      res.json({
+        success: true,
+        message: 'Week Assigned update completed',
+        results
+      });
+    } catch (error) {
+      console.error('Manual update failed:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
+
+  console.log('Manual trigger endpoint available at: POST /jobs/update-week-assigned');
+} else {
+  console.log('Scheduled jobs disabled (CRON_ENABLED != true)');
+}
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Webhook handler server running on port ${PORT}`);

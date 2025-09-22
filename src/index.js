@@ -106,6 +106,32 @@ if (process.env.CRON_ENABLED === 'true') {
     }
   });
 
+  // Debug endpoint to check environment variables
+  app.get('/debug/env', apiKeyAuth, (req, res) => {
+    const envVars = {
+      NODE_ENV: process.env.NODE_ENV,
+      PORT: process.env.PORT,
+      API_KEY: process.env.API_KEY ? 'SET' : 'NOT SET',
+      MONDAY_API_TOKEN: process.env.MONDAY_API_TOKEN ? 'SET' : 'NOT SET',
+      SLACK_NOTIFICATIONS_ENABLED: process.env.SLACK_NOTIFICATIONS_ENABLED,
+      SLACK_WEBHOOK_URL: process.env.SLACK_WEBHOOK_URL ? 'SET' : 'NOT SET',
+      SLACK_CHANNEL: process.env.SLACK_CHANNEL,
+      CRON_ENABLED: process.env.CRON_ENABLED,
+      MONDAY_BOARD_IDS: process.env.MONDAY_BOARD_IDS,
+      CRON_SCHEDULE: process.env.CRON_SCHEDULE,
+      CRON_TIMEZONE: process.env.CRON_TIMEZONE,
+      // Show all env vars that start with SLACK_ or CRON_
+      allSlackVars: Object.keys(process.env).filter(key => key.startsWith('SLACK_')),
+      allCronVars: Object.keys(process.env).filter(key => key.startsWith('CRON_'))
+    };
+
+    res.json({
+      message: 'Environment variables debug info',
+      environment: envVars,
+      totalEnvVars: Object.keys(process.env).length
+    });
+  });
+
   console.log('Manual trigger endpoint available at: POST /jobs/update-week-assigned');
 } else {
   console.log('Scheduled jobs disabled (CRON_ENABLED != true)');

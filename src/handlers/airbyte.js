@@ -1,4 +1,5 @@
 const express = require('express');
+const slackNotifier = require('../utils/slackNotifier');
 const router = express.Router();
 
 router.post('/', async (req, res) => {
@@ -34,7 +35,8 @@ router.post('/', async (req, res) => {
           jobId,
           recordsCommitted,
           bytesCommitted,
-          duration: endTime - startTime
+          duration: endTime - startTime,
+          attemptNumber
         });
         break;
       case 'failed':
@@ -42,7 +44,8 @@ router.post('/', async (req, res) => {
           connectionId,
           connectionName,
           jobId,
-          attemptNumber
+          attemptNumber,
+          error: req.body.error || req.body.failureReason
         });
         break;
       case 'running':
@@ -89,6 +92,17 @@ async function handleSyncSuccess(data) {
     bytesCommitted: data.bytesCommitted,
     duration: `${Math.round(data.duration / 1000)}s`
   });
+
+  // Only send Slack notification if there were retries (indicates issues)
+  if (data.attemptNumber && data.attemptNumber > 1) {
+    await slackNotifier.sendAirbyteAlert({
+      jobStatus: 'succeeded',
+      connectionName: data.connectionName,
+      connectionId: data.connectionId,
+      jobId: data.jobId,
+      attemptNumber: data.attemptNumber
+    });
+  }
 }
 
 async function handleSyncFailure(data) {
@@ -96,6 +110,16 @@ async function handleSyncFailure(data) {
     connectionName: data.connectionName,
     jobId: data.jobId,
     attemptNumber: data.attemptNumber
+  });
+
+  // Always send Slack notification for failures
+  await slackNotifier.sendAirbyteAlert({
+    jobStatus: 'failed',
+    connectionName: data.connectionName,
+    connectionId: data.connectionId,
+    jobId: data.jobId,
+    attemptNumber: data.attemptNumber,
+    error: data.error || 'Sync failed without specific error message'
   });
 }
 
@@ -112,6 +136,14 @@ async function handleSyncCancelled(data) {
     connectionName: data.connectionName,
     jobId: data.jobId
   });
+
+  // Send Slack notification for cancelled syncs (may indicate issues)
+  await slackNotifier.sendAirbyteAlert({
+    jobStatus: 'cancelled',
+    connectionName: data.connectionName,
+    connectionId: data.connectionId,
+    jobId: data.jobId
+  });
 }
 
 async function handleStreamStatuses(streamStatuses) {
@@ -124,5 +156,33 @@ async function handleStreamStatuses(streamStatuses) {
     });
   });
 }
+
+// Test endpoint for Slack notifications (remove in production)
+router.post('/test-slack', async (req, res) => {
+  try {
+    const testData = {
+      jobStatus: 'failed',
+      connectionName: 'Test Connection',
+      connectionId: 'test-123',
+      jobId: 'job-456',
+      attemptNumber: 2,
+      error: 'This is a test notification from Airbyte webhook handler'
+    };
+
+    const sent = await slackNotifier.sendAirbyteAlert(testData);
+
+    res.json({
+      success: sent,
+      message: sent ? 'Test Slack notification sent' : 'Slack notifications disabled or failed',
+      testData
+    });
+  } catch (error) {
+    console.error('Test Slack notification failed:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
 
 module.exports = router;

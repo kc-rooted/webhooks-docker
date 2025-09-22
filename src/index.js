@@ -26,7 +26,7 @@ app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 
 app.use('/webhooks/monday', apiKeyAuth, validateWebhook('monday'), mondayRouter);
-app.use('/webhooks/airbyte', apiKeyAuth, validateWebhook('airbyte'), airbyteRouter);
+app.use('/webhooks/airbyte', apiKeyAuth, airbyteRouter);
 app.use('/health', healthRouter);
 
 app.get('/', apiKeyAuth, (req, res) => {

@@ -20,6 +20,15 @@ services:
       - CORS_ORIGINS=${CORS_ORIGINS:-*}
       - RATE_LIMIT_WINDOW_MS=${RATE_LIMIT_WINDOW_MS:-900000}
       - RATE_LIMIT_MAX_REQUESTS=${RATE_LIMIT_MAX_REQUESTS:-100}
+      # Scheduled Jobs Configuration
+      - CRON_ENABLED=${CRON_ENABLED:-true}
+      - MONDAY_BOARD_IDS=${MONDAY_BOARD_IDS}
+      - CRON_SCHEDULE=${CRON_SCHEDULE:-0 3 * * *}
+      - CRON_TIMEZONE=${CRON_TIMEZONE:-America/New_York}
+      # Slack Configuration
+      - SLACK_NOTIFICATIONS_ENABLED=${SLACK_NOTIFICATIONS_ENABLED:-false}
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL}
+      - SLACK_CHANNEL=${SLACK_CHANNEL:-#data-alerts}
     networks:
       - webhook-network
     labels:

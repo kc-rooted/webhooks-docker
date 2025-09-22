@@ -158,7 +158,7 @@ async function handleStreamStatuses(streamStatuses) {
 }
 
 // Test endpoint for Slack notifications (remove in production)
-router.post('/test-slack', async (req, res) => {
+const testSlackHandler = async (req, res) => {
   try {
     const testData = {
       jobStatus: 'failed',
@@ -183,6 +183,9 @@ router.post('/test-slack', async (req, res) => {
       error: error.message
     });
   }
-});
+};
+
+router.get('/test-slack', testSlackHandler);
+router.post('/test-slack', testSlackHandler);
 
 module.exports = router;

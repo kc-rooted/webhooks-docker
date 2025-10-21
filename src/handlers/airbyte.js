@@ -4,26 +4,48 @@ const router = express.Router();
 
 router.post('/', async (req, res) => {
   try {
-    const {
-      connectionId,
-      connectionName,
-      jobId,
-      jobStatus,
-      attemptNumber,
-      recordsEmitted,
-      recordsCommitted,
-      bytesEmitted,
-      bytesCommitted,
-      startTime,
-      endTime,
-      streamStatuses
-    } = req.body;
+    // Log the FULL raw payload to see what Airbyte is actually sending
+    console.log('Airbyte webhook RAW payload:', JSON.stringify(req.body, null, 2));
+
+    // Airbyte sends data in a nested structure
+    const data = req.body.data || req.body; // Support both nested and flat formats
+
+    // Extract connection details
+    const connectionId = data.connection?.id || data.connectionId;
+    const connectionName = data.connection?.name || data.connectionName;
+
+    // Extract job details
+    const jobId = data.jobId;
+
+    // Airbyte uses 'success' boolean, not 'jobStatus' string
+    // Map it to a status string for our handlers
+    let jobStatus;
+    if (data.success === true) {
+      jobStatus = 'succeeded';
+    } else if (data.success === false) {
+      jobStatus = 'failed';
+    } else if (data.status) {
+      jobStatus = data.status; // Fallback to status field if it exists
+    } else {
+      jobStatus = 'unknown';
+    }
+
+    // Extract metrics
+    const attemptNumber = data.attemptNumber;
+    const recordsEmitted = data.recordsEmitted;
+    const recordsCommitted = data.recordsCommitted;
+    const bytesEmitted = data.bytesEmitted;
+    const bytesCommitted = data.bytesCommitted;
+    const startTime = data.startedAt ? new Date(data.startedAt).getTime() : data.startTime;
+    const endTime = data.finishedAt ? new Date(data.finishedAt).getTime() : data.endTime;
+    const streamStatuses = data.streamStatuses;
 
     console.log('Airbyte webhook received:', {
       connectionId,
       connectionName,
       jobId,
       jobStatus,
+      success: data.success,
       timestamp: new Date().toISOString()
     });
 
@@ -45,7 +67,9 @@ router.post('/', async (req, res) => {
           connectionName,
           jobId,
           attemptNumber,
-          error: req.body.error || req.body.failureReason
+          error: data.errorMessage || data.error || data.failureReason,
+          errorType: data.errorType,
+          errorOrigin: data.errorOrigin
         });
         break;
       case 'running':
@@ -62,6 +86,17 @@ router.post('/', async (req, res) => {
           connectionId,
           connectionName,
           jobId
+        });
+        break;
+      case 'unknown':
+        console.log('Airbyte webhook received with unknown status - full data:', {
+          connectionId,
+          connectionName,
+          jobId,
+          successField: data.success,
+          statusField: data.status,
+          hasData: !!data,
+          rootKeys: Object.keys(req.body)
         });
         break;
       default:
